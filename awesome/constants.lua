@@ -1,0 +1,5 @@
+# Left/right mouse button
+MOUSE_BTN_LEFT = 1
+MOUSE_BTN_RIGHT = 3
+MOUSE_SCR_NEXT = 4
+MOUSE_SCR_PREV= 5
