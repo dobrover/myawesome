@@ -25,7 +25,6 @@ rc = {
     -- Default terminal
     terminal = "urxvt",
 } 
-
 -- Table of layouts to cover with awful.layout.inc, order matters.
 rc.layouts =
 {
@@ -81,6 +80,8 @@ widgetlayout.do_layout()
 
 -- }}}
 
+-- Miscelaneous stuff
+rc.misc = require('addons.misc')
 -- Dropdown module
 rc.dropdown = require('addons.dropdown')
 do
