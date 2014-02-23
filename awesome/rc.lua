@@ -15,7 +15,6 @@ require('constants')
 -- Themes define colours, icons, and wallpapers
 beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 
-
 -- Useful functions
 utils = require("utils")
 -- Used by awesome-client and evaluating lua code at prompt
@@ -74,13 +73,8 @@ awful.rules.rules = {
 -- {{{ Widgets and layout
 
 -- Add widgets folder to path
-package.path = string.format('%s;%s/widgets/?.lua',
-                             package.path,
-                             awful.util.getdir("config"))
-rc.widgets = {}
-rc.widgets.volume = require("volume")
-rc.widgets.battery = require("battery")
-rc.widgets.kbdd = require("kbdd")
+
+rc.widgets = require('widgets')
 
 local widgetlayout = require('widgetlayout')
 widgetlayout.do_layout()
@@ -88,7 +82,7 @@ widgetlayout.do_layout()
 -- }}}
 
 -- Dropdown module
-rc.dropdown = require('dropdown')
+rc.dropdown = require('addons.dropdown')
 do
     local urxvt_title = "dropdownURxvt"
     rc.dropdown.floaters["urxvt"] = {
