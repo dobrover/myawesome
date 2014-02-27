@@ -22,13 +22,14 @@ function M.Floater:init(args)
     self.command = args.command
     -- Should have 4 fields - x, y, width and height.
     -- If field value is positive, it will be taken as is.
-    -- If field value is negative this value will be multiplied  by the workarea height/width
+    -- If field value is negative this value will be multiplied  by the workarea height/width.
     self.geometry = args.geometry
     -- Set this argument to true if your client starts slowly.
     self.keep_in_background = args.keep_in_background
     self.client = nil
 end
 
+--- Make client belong to a floater, set properties, etc. Called only once.
 function M.Floater:init_client()
     self.client:connect_signal("unmanage", function () self:on_unmanage() end)
     self.client:connect_signal("unfocus", function () self:on_unfocus() end)
@@ -36,6 +37,7 @@ function M.Floater:init_client()
     self:update_geometry()
 end
 
+--- Make client a special window.
 function M.Floater:apply_client_settings()
     c = self.client
     c.skip_taskbar = true
@@ -48,6 +50,7 @@ function M.Floater:apply_client_settings()
     c.size_hints_honor = false
 end
 
+--- Helper function for update_geometry.
 local function relative_to_absolute(value, absolute)
     if value >= 0 then
         return value
@@ -55,6 +58,7 @@ local function relative_to_absolute(value, absolute)
     return (- value * absolute)
 end
 
+--- Updates client position and size.
 function M.Floater:update_geometry()
     if self.geometry == nil then
         return
@@ -69,6 +73,9 @@ function M.Floater:update_geometry()
     self.client:geometry(client_geometry)
 end
 
+--- Shows or hides client depending on `show` param.
+-- @param show Whether client should be shown or hidden. If this
+--             value is nil, the client's visibility is toggled.
 function M.Floater:hideshow(show)
     if show == nil then
         show = not self.client:isvisible()
@@ -80,12 +87,14 @@ function M.Floater:hideshow(show)
     end
 end
 
+--- Tries to hide/show a floater's client, if there is no client, spawns it.
+-- @param show Same as in Floater:hideshow.
 function M.Floater:toggle(show)
     if self:has_client() then
         self:hideshow(show)
         return
     end
-    -- Spawn it and then toggle
+    -- Spawn it and then toggle.
     -- If we toggle a floater that wasn't spawned before, show it.
     if show == nil then
         show = true
@@ -95,38 +104,46 @@ function M.Floater:toggle(show)
     end)
 end
 
+--- Shows client.
 function M.Floater:show()
     awful.client.movetotag(awful.tag.selected(1), self.client)
     capi.client.focus = self.client
     self.client:raise()
 end
 
+--- Hides client.
 function M.Floater:hide()
     self.client.hidden = true
 end
 
+--- Sets floater's client.
 function M.Floater:set_client(c)
     self.client = c
 end
 
+--- Tells if this floater has a client.
 function M.Floater:has_client()
     return self.client ~= nil
 end
 
+--- Tells if there is a client being spawned.
 function M.Floater:has_pending_client()
     return self._is_already_spawning
 end
 
+--- Tells if this client can belong to this floater.
 function M.Floater:client_matches(c)
     return self.rule ~= nil and awful.rules.match(c, self.rule)
 end
 
+--- Spawns a client in the background if it is not yet spawned and if it is not being spawned.
 function M.Floater:spawn_in_bg()
     if not (self:has_client() or self:has_pending_client()) then
         self:spawn(function () self:hide() end)
     end
 end
 
+--- Called when client window was closed, try to reopen it in background if option is set.
 function M.Floater:on_unmanage()
     self.client = nil
     if self.keep_in_background then
@@ -136,10 +153,12 @@ function M.Floater:on_unmanage()
     end
 end
 
+--- Called when client loses focus
 function M.Floater:on_unfocus()
     self:hide()
 end
 
+--- Called when floater is added to floaters table
 function M.Floater:on_added()
     if self.keep_in_background then
         utils.run_after(0, function ()
@@ -148,6 +167,7 @@ function M.Floater:on_added()
     end
 end
 
+--- Return floater's rule/properties so that it can be added to awful.rules.rules
 function M.Floater:get_rule_prop_pair()
     if self.rule == nil or self.properties == nil then
         return nil
@@ -158,11 +178,14 @@ function M.Floater:get_rule_prop_pair()
     }
 end
 
+--- Starts floater's client. Must return pid.
 function M.Floater:start_app()
     return awful.util.spawn(self.command)
 end
 
-
+--- Spawns a client. If multiple spawns were issued before client was managed,
+--- their callbacks will be ordered in queue.
+-- @param on_spawned_callback Callback to be called after client is spawned.
 function M.Floater:spawn(on_spawned_callback)
     if self:has_client() then
         if on_spawned_callback ~= nil then
@@ -193,6 +216,7 @@ function M.Floater:spawn(on_spawned_callback)
 
 end
 
+--- Called when a new client appears
 function M.on_manage(c, startup)
     if not startup then -- we will try to recover lost floaters only after awesome.restart()
         return
@@ -213,11 +237,13 @@ function M.on_manage(c, startup)
     end
 end
 
+--- Toggles floater `floater_name`.
 function M.toggle(floater_name, show)
     local floater = M.floaters[floater_name]
     floater:toggle(show)
 end
 
+--- Returns table of rules of all floaters.
 function M.get_rules_properties()
     result = {}
     for floater_name, floater in pairs(M.floaters) do
@@ -226,6 +252,7 @@ function M.get_rules_properties()
     return result
 end
 
+--- Add Floater object and name it as `floater_name`
 function M.add(floater_name, floater)
     M.floaters[floater_name] = floater
     floater:on_added()
