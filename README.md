@@ -1,4 +1,4 @@
-My awesome WM config
+My Awesome WM config
 
 Installation:
 ```bash
