@@ -96,9 +96,7 @@ do
         },
         -- Disable tabs because of bug https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=511377
         command = ("urxvt --title '%s' -pe '-tabbedex,-tabbed' "):format(urxvt_title),
-        -- If negative, value will be taken as is. Otherwise it will be multiplied by workarea size.
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
-        -- The window will be spawned at startup and will will always exist.
         keep_in_background = true,
     }))
 end
