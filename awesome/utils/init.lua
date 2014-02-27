@@ -1,7 +1,7 @@
 local naughty = require('naughty')
-local M = {}
+local utils = {}
 
-function M.create_timer_and_fire(func, interval)
+function utils.create_timer_and_fire(func, interval)
     func()
     local new_timer = timer({ timeout = interval })
     new_timer:connect_signal("timeout", func)
@@ -9,7 +9,7 @@ function M.create_timer_and_fire(func, interval)
     return new_timer
 end
 
-function M.run_after(seconds, func)
+function utils.run_after(seconds, func)
     local t = timer({timeout = seconds})
     t:connect_signal("timeout", function()
         t:stop()
@@ -19,7 +19,7 @@ function M.run_after(seconds, func)
     return t
 end
 
-function M.dbg(...)
+function utils.dbg(...)
     local printResult = ''
     local arg = {...}
     for i = 1, #arg do
@@ -28,8 +28,12 @@ function M.dbg(...)
     naughty.notify({text = printResult})
 end
 
-function M.monospace(text)
+function utils.monospace(text)
   return "<span face='monospace'>" .. text .. "</span>"
 end
 
-return M
+utils.class = require('utils.class')
+
+utils.pid_to_client = require('utils.pid_to_client')
+
+return utils
