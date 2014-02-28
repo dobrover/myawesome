@@ -37,11 +37,14 @@ function M.Floater:init_client()
     self:update_geometry()
 end
 
+--- Same as init_client but ran in 'manage' signal handler
+function M.Floater:init_client_direct()
+end
+
 --- Make client a special window.
 function M.Floater:apply_client_settings()
     c = self.client
     c.skip_taskbar = true
-    awful.rules.apply(c)
     awful.placement.no_overlap(c)
     awful.placement.no_offscreen(c)
     -- We want to be able to resize such windows, so, comment the next line
@@ -99,9 +102,7 @@ function M.Floater:toggle(show)
     if show == nil then
         show = true
     end
-    self:spawn(function () 
-        self:hideshow(show)
-    end)
+    self:spawn(function () self:hideshow(show) end)
 end
 
 --- Shows client.
@@ -139,7 +140,7 @@ end
 --- Spawns a client in the background if it is not yet spawned and if it is not being spawned.
 function M.Floater:spawn_in_bg()
     if not (self:has_client() or self:has_pending_client()) then
-        self:spawn(function () self:hide() end)
+        self:spawn(nil, function () self:hide() end)
     end
 end
 
@@ -185,33 +186,41 @@ end
 
 --- Spawns a client. If multiple spawns were issued before client was managed,
 --- their callbacks will be ordered in queue.
--- @param on_spawned_callback Callback to be called after client is spawned.
-function M.Floater:spawn(on_spawned_callback)
+-- @param indirect_callback Callback to be spawned after client in spawned, but not in the
+--                          manage handler. This is required when current tag layout is floating.
+-- @param callback Callback to be called after client is spawned.
+function M.Floater:spawn(indirect_callback, callback)
     if self:has_client() then
-        if on_spawned_callback ~= nil then
-            on_spawned_callback()
-        end
+        -- It is probably a bug if we got here.
         return
     end
-    if self._is_already_spawning ~= nil then
-        table.insert(self._on_spawned_callbacks, on_spawned_callback)
+    self._spawn_callbacks = self._spawn_callbacks or {}
+    self._indirect_spawn_callbacks = self._indirect_spawn_callbacks or {}
+    table.insert(self._spawn_callbacks, callback)
+    table.insert(self._indirect_spawn_callbacks, indirect_callback)
+    if self._is_already_spawning then
         return
     end
     self._is_already_spawning = true
-    self._on_spawned_callbacks = {on_spawned_callback}
 
     local pid = self:start_app()
     pid_to_client.set_pid_callback(pid, function (c)
         self:set_client(c)
-        self._is_already_spawning = nil
-        callbacks = self._on_spawned_callbacks
-        self._on_spawned_callbacks = nil
+        self._is_already_spawning = false
+        callbacks = self._spawn_callbacks
+        indirect_callbacks = self._indirect_spawn_callbacks
+        self._spawn_callbacks = nil
+        self._indirect_spawn_callbacks = nil
         utils.run_after(0, function()
             self:init_client()
-            for _, callback in ipairs(callbacks) do
-                callback()
+            for _, cb in ipairs(indirect_callbacks) do
+                cb()
             end
         end)
+        self:init_client_direct()
+        for _, cb in ipairs(callbacks) do
+            cb()
+        end
     end)
 
 end

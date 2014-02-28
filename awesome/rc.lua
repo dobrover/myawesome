@@ -55,7 +55,7 @@ local bindings = require('bindings')
 root.keys(bindings.globalkeys)
 
 -- General rules
-awful.rules.rules = {
+awful.rules.rules = awful.util.table.join(awful.rules.rules, {
     -- Rule for all clients
     { 
         rule = { },
@@ -67,7 +67,8 @@ awful.rules.rules = {
             buttons = bindings.clientbuttons 
         } 
     },
-}
+    require('apprules'),
+})
 
 -- {{{ Widgets and layout
 
@@ -101,11 +102,8 @@ do
     }))
 end
 
--- Additional rules + dropdown rules
-awful.rules.rules = awful.util.table.join(awful.rules.rules, 
-    require('apprules'),
-    rc.dropdown.get_rules_properties()
-)
+-- Extend with dropdown rules
+awful.rules.rules = awful.util.table.join(awful.rules.rules, rc.dropdown.get_rules_properties())
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
