@@ -11,13 +11,14 @@ local beautiful = require("beautiful")
 local naughty = require("naughty")
 -- Defined constants
 require('constants')
--- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 
 -- Useful functions
 utils = require("utils")
+
 -- Used by awesome-client and evaluating lua code at prompt
+-- TODO: Replace with logging everywhere
 dbg = utils.dbg
 
 -- Global variables across rc.lua and subfiles
@@ -25,6 +26,9 @@ rc = {
     -- Default terminal
     terminal = "urxvt",
 } 
+
+rc.utils = utils
+rc.logger = logger -- Just for conveniency.
 -- Table of layouts to cover with awful.layout.inc, order matters.
 rc.layouts =
 {
@@ -69,7 +73,7 @@ awful.rules.rules = awful.util.table.join(awful.rules.rules, {
     },
     require('apprules'),
 })
-
+-- TODO: Fix this
 -- {{{ Widgets and layout
 
 -- Add widgets folder to path

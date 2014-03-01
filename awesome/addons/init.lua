@@ -1,6 +1,3 @@
-local addons = {} -- addons module
+local utils = require('utils')
 
-addons.dropdown  = require("addons.dropdown")
-addons.misc = require("addons.misc")
-
-return addons
+return utils.package(...)

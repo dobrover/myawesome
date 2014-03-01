@@ -1,7 +1,3 @@
-local widgets = {} -- widgets module
+local utils = require('utils')
 
-widgets.battery  = require("widgets.battery")
-widgets.kbdd = require("widgets.kbdd")
-widgets.volume = require("widgets.volume")
-
-return widgets
+return utils.package(...)

@@ -5,7 +5,6 @@ local capi = {
     screen = screen
 }
 local utils = require('utils')
-local pid_to_client = require('utils.pid_to_client')
 
 M = {}
 
@@ -51,6 +50,15 @@ function M.Floater:apply_client_settings()
     -- self.client:buttons({})
     c:keys({})
     c.size_hints_honor = false
+    if self.rules == nil then
+        -- Client didn't provide us with rules to detect the client so apply properties manually
+        -- This will cause the layout to blink if for example the current layout is tiling
+        -- and we want to set floating=true
+        if self.properties then
+            local entry = {properties = self.properties}
+            utils.rules.apply_to_client(c, {entry})
+        end
+    end 
 end
 
 --- Helper function for update_geometry.
@@ -181,7 +189,8 @@ end
 
 --- Starts floater's client. Must return pid.
 function M.Floater:start_app()
-    return awful.util.spawn(self.command)
+    result = awful.util.spawn(self.command)
+    return result
 end
 
 --- Spawns a client. If multiple spawns were issued before client was managed,
@@ -204,7 +213,7 @@ function M.Floater:spawn(indirect_callback, callback)
     self._is_already_spawning = true
 
     local pid = self:start_app()
-    pid_to_client.set_pid_callback(pid, function (c)
+    utils.pid_to_client.set_pid_callback(pid, function (c)
         self:set_client(c)
         self._is_already_spawning = false
         callbacks = self._spawn_callbacks
@@ -235,6 +244,10 @@ function M.on_manage(c, startup)
         if not floater:has_client() and floater:client_matches(c) then
             floater:set_client(c)
             -- It's crucial to run init_client not in manage signal handler.
+            -- Because for example c:geometry call is done there.
+            -- If c:geometry call is done in manage signal handler directly
+            -- and the client has just spawned and the current layout is floating
+            -- then the geometry call won't set client position/size.
             utils.run_after(0, function()
                 floater:init_client()
                 -- By default we will just hide all "recovered" floaters.
