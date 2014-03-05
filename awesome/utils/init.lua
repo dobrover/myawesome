@@ -1,18 +1,19 @@
 local lfs = require('lfs')
-local naughty = require('naughty')
+
 
 -- TODO: Maybe move all functions somewhere down?
 
 -- This function is only used to debug package loading (safe_require and package)
 -- Just keep it if I suddenly decide to rewrite packaging
-local function dbg(...)
-    local printResult = ''
-    local arg = {...}
-    for i = 1, #arg do
-        printResult = printResult .. tostring(arg[i]) .. (i == #arg and '' or ' ')
-    end
-    naughty.notify({text = printResult, timeout = 30})
-end
+-- local naughty = require('naughty')
+-- local function dbg(...)
+--     local printResult = ''
+--     local arg = {...}
+--     for i = 1, #arg do
+--         printResult = printResult .. tostring(arg[i]) .. (i == #arg and '' or ' ')
+--     end
+--     naughty.notify({text = printResult, timeout = 30})
+-- end
 
 local function safe_require(module_name)
     local status, module = pcall(require, module_name)
