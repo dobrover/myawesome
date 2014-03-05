@@ -19,14 +19,24 @@ M.globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ), -- Next tag
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore), -- Go to previous tag in history
 
-    -- Previous client
-    awful.key({ modkey,           }, "j", function ()
-            awful.client.focus.byidx( 1)
+    -- Mod+WASD navigation
+    awful.key({ modkey,           }, "a", function ()
+            awful.client.focus.bydirection('left')
             if client.focus then client.focus:raise() end
         end),
-    -- Next client
-    awful.key({ modkey,           }, "k", function ()
-        awful.client.focus.byidx(-1)
+
+    awful.key({ modkey,           }, "d", function ()
+        awful.client.focus.bydirection('right')
+        if client.focus then client.focus:raise() end
+    end),
+
+    awful.key({ modkey,           }, "w", function ()
+        awful.client.focus.bydirection('up')
+        if client.focus then client.focus:raise() end
+    end),
+
+    awful.key({ modkey,           }, "s", function ()
+        awful.client.focus.bydirection('down')
         if client.focus then client.focus:raise() end
     end),
 
