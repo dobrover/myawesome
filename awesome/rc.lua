@@ -17,15 +17,26 @@ beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 -- Useful functions
 utils = require("utils")
 
--- Used by awesome-client and evaluating lua code at prompt
--- TODO: Replace with logging everywhere
-dbg = utils.dbg
-
 -- Global variables across rc.lua and subfiles
 rc = {
     -- Default terminal
     terminal = "urxvt",
 } 
+
+-- TOODO!
+-- Refactor everywhere dbg
+-- Logging (also add to file for debg logs)
+-- Move utils functions to submodules
+-- Write deferreds (basic verison very)
+-- Dropdown by rule or path
+-- Memstorage - cheap get, costly set, set -> also sets to cache
+-- Dropdown use x window id instead of rules
+-- One time app rules. - on manage signal. If new windowappears, applies rule and saves to memstorage
+-- Add timeout to deferreds
+
+-- Idea - turn dropdown into a normal window. How? Apply back client keys (basically backup everything when making it)
+-- Also add a button to make a normal window into dropdown. Cool!
+
 
 rc.utils = utils
 rc.logger = logger -- Just for conveniency.
@@ -60,19 +71,21 @@ root.keys(bindings.globalkeys)
 
 -- General rules
 awful.rules.rules = awful.util.table.join(awful.rules.rules, {
-    -- Rule for all clients
-    { 
-        rule = { },
-        properties = {
-            border_width = beautiful.border_width,
-            border_color = beautiful.border_normal,
-            focus = awful.client.focus.filter,
-            keys = bindings.clientkeys,
-            buttons = bindings.clientbuttons 
-        } 
+        -- Rule for all clients
+        { 
+            rule = { },
+            properties = {
+                border_width = beautiful.border_width,
+                border_color = beautiful.border_normal,
+                focus = awful.client.focus.filter,
+                keys = bindings.clientkeys,
+                buttons = bindings.clientbuttons 
+            } 
+        },
     },
-    require('apprules'),
-})
+    require('apprules')
+)
+
 -- TODO: Fix this
 -- {{{ Widgets and layout
 
@@ -99,8 +112,7 @@ do
         properties = {
             floating = true,
         },
-        -- Disable tabs because of bug https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=511377
-        command = ("urxvt --title '%s' -pe '-tabbedex,-tabbed' "):format(urxvt_title),
+        command = ("urxvt --title '%s' "):format(urxvt_title),
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
         keep_in_background = true,
     }))
