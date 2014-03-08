@@ -12,6 +12,11 @@ local function eval_lua_prompt()
     awful.util.getdir("cache") .. "/history_eval")
 end
 
+local function switch_focus(switch_function)
+    switch_function()
+    if client.focus then client.focus:raise() end
+end
+
 -- {{{ Key bindings
 M.globalkeys = awful.util.table.join(
     -- Tag navigation
@@ -20,25 +25,30 @@ M.globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore), -- Go to previous tag in history
 
     -- Mod+WASD navigation
-    awful.key({ modkey,           }, "a", function ()
+    awful.key({ modkey,           }, "a", function () switch_focus(function ()
             awful.client.focus.bydirection('left')
-            if client.focus then client.focus:raise() end
-        end),
+    end) end),
 
-    awful.key({ modkey,           }, "d", function ()
+    awful.key({ modkey,           }, "d", function () switch_focus(function ()
         awful.client.focus.bydirection('right')
-        if client.focus then client.focus:raise() end
-    end),
+    end) end),
 
-    awful.key({ modkey,           }, "w", function ()
+    awful.key({ modkey,           }, "w", function ()switch_focus(function ()
         awful.client.focus.bydirection('up')
-        if client.focus then client.focus:raise() end
-    end),
+    end) end),
 
-    awful.key({ modkey,           }, "s", function ()
+    awful.key({ modkey,           }, "s", function () switch_focus(function ()
         awful.client.focus.bydirection('down')
-        if client.focus then client.focus:raise() end
-    end),
+    end) end),
+
+    -- And j,k navigation also for floating windows
+
+    awful.key({ modkey,           }, "j", function() switch_focus(function ()
+        awful.client.focus.byidx(1)
+    end) end),
+    awful.key({ modkey,           }, "k", function () switch_focus(function ()
+        awful.client.focus.byidx(1)
+    end) end),
 
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
@@ -79,7 +89,7 @@ M.globalkeys = awful.util.table.join(
     awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("xbacklight -inc 10") end),
     awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 10") end),
 
-    awful.key({ }, "Print", function () awful.util.spawn("scrot -e 'mv $f ~/screenshots/ 2>/dev/null'") end),
+    awful.key({ }, "Print", function () awful.util.spawn("scrot -e 'mv $f ~/.screenshots/ 2>/dev/null'", false) end),
     
     -- Prompt
     awful.key({ modkey }, "r",     function () mypromptbox[mouse.screen]:run() end),
