@@ -1,3 +1,3 @@
-local utils = require('utils')
+local log = require('logging').getLogger(...)
 
-return utils.package(...)
+return require('common').package({}, ...)

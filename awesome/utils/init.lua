@@ -1,43 +1,7 @@
 local lfs = require('lfs')
+local log = require('logging').getLogger(...)
 
-
--- TODO: Maybe move all functions somewhere down?
-
--- This function is only used to debug package loading (safe_require and package)
--- Just keep it if I suddenly decide to rewrite packaging
--- local naughty = require('naughty')
--- local function dbg(...)
---     local printResult = ''
---     local arg = {...}
---     for i = 1, #arg do
---         printResult = printResult .. tostring(arg[i]) .. (i == #arg and '' or ' ')
---     end
---     naughty.notify({text = printResult, timeout = 30})
--- end
-
-local function safe_require(module_name)
-    local status, module = pcall(require, module_name)
-    return status and module or nil
-end
-
-local function package(package_name)
-    local M = {__name = package_name}
-    local mt = {
-        __index = function (t, k) 
-            local maybe_module = safe_require(package_name .. '.'  .. k)
-            t[k] = maybe_module
-            return maybe_module
-        end
-    }
-    setmetatable(M, mt)
-    return M
-end
-
-local utils = package(...)
-
-utils.safe_require = safe_require
-utils.package = package
-utils.dbg = dbg
+local utils = {}
 
 ---If we are running under awesome
 function utils.is_under_awesome()
@@ -99,4 +63,4 @@ function utils.processfieldsmapper(fields)
     return fields_mapper
 end
 
-return utils
+return require('common').package(utils, ...)

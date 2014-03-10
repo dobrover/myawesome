@@ -1,6 +1,7 @@
 -- Module for miscelaneous stuff that doesn't deserve its own module.
 
 local M = {}
+local log = require('logging').getLogger(...)
 
 local naughty = require('naughty')
 M.eye_relax_timer = timer({timeout = 60*10})

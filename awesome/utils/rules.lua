@@ -3,6 +3,7 @@ local capi = {
 }
 local aclient = require('awful.client')
 local atag = require('awful.tag')
+local log = require('logging').getLogger(...)
 
 local M = {}
 

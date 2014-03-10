@@ -9,6 +9,11 @@ wibox = require("wibox")
 local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
+-- Logging config
+require 'utils.loggingconfig'
+local log = require('logging').getLogger('rc')
+
+
 -- Defined constants
 require('constants')
 -- Themes define colours, icons, and wallpapers
@@ -24,8 +29,7 @@ rc = {
 } 
 
 -- TOODO!
--- Refactor everywhere dbg
--- Logging (also add to file for debg logs)
+-- Logging - human-readable config!
 -- Move utils functions to submodules
 -- Write deferreds (basic verison very)
 -- Dropdown by rule or path

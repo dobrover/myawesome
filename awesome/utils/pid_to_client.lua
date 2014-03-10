@@ -1,6 +1,7 @@
 local capi = {
     client = client,
 }
+local log = require('logging').getLogger(...)
 
 local M = {}
 

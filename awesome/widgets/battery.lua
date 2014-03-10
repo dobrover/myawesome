@@ -1,5 +1,6 @@
 local naughty = require('naughty')
 local utils = require('utils')
+local log = require('logging').getLogger(...)
 
 local M = {}
 -- If less then LOW_THRESHOLD% battery left, notify

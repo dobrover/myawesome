@@ -1,4 +1,4 @@
-
+local log = require('logging').getLogger(...)
 local awful = require('awful')
 
 local M = {}
