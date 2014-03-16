@@ -82,6 +82,8 @@ end
 local bindings = require('bindings')
 root.keys(bindings.globalkeys)
 
+local apprules = require('apprules')
+
 -- General rules
 awful.rules.rules = awful.util.table.join(awful.rules.rules, {
         -- Rule for all clients
@@ -96,7 +98,7 @@ awful.rules.rules = awful.util.table.join(awful.rules.rules, {
             } 
         },
     },
-    require('apprules')
+    apprules.permanent_rules
 )
 
 -- TODO: Fix this
