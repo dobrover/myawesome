@@ -1,3 +1,5 @@
+local M = {}
+
 local awful = require("awful")
 local capi = {
     mouse = mouse,
@@ -5,42 +7,29 @@ local capi = {
     screen = screen
 }
 local utils = require('utils')
-local log = require('logging').getLogger(...)
+local common = require 'common'
+local logging = require 'logging'
+local log = logging.getLogger(...)
 local oo = require('loop.simple')
-
-M = {}
 
 M.floaters = {}
 
-local baseclass = {}
+M.wid_storage = utils.memstorage.MemstorageAdapter(rc.storage, 'dropdown.clientid')
 
-local oo = require "loop.simple"
+M.Floater = common.baseclass.class()
 
--- This class will be parent of all classes used for rewriting Python modules.
--- Probably I'd add MRO here later.
-local Base = oo.class({})
-
-baseclass.Base = Base
-
-function Base.__init(cls, ...)
-    local self = {}
-    oo.rawnew(cls, self)
-    cls.__create(self, ...)
-    return self
+-- TODO: Temporary
+local PrefixedLoggerAdapter = common.baseclass.class({}, logging.LoggerAdapter)
+function PrefixedLoggerAdapter:process(args)
+    oo.superclass(PrefixedLoggerAdapter).process(self, args)
+     args[1] = self.extra.msg_prefix .. args[1]
 end
-
--- All classes inherited from Base will always have __create method.
-function Base.__create(self, ...)
-end
-
--- Shortcut for creating a new class that defaults parent to Base.
-function baseclass.class(class_table, parent)
-    return oo.class(class_table or {}, parent or baseclass.Base)
-end
-
-M.Floater = baseclass.class()
 
 function M.Floater:__create(args)
+    -- Name, used for logging and to interact with specific floater.
+    self.name = args.name
+    -- Prefix all log messages with floater name.
+    self.log = PrefixedLoggerAdapter(log, {msg_prefix=self.name .. ': '})
     -- Client rule-properties that will be added to awful.rules
     -- Also this rule will be used to restore "lost" clients after awesome.restart()
     self.rule = args.rule
@@ -53,6 +42,8 @@ function M.Floater:__create(args)
     self.geometry = args.geometry
     -- Set this argument to true if your client starts slowly.
     self.keep_in_background = args.keep_in_background
+    -- Detection by rules, useful for programs that do fork tricks.
+    self.detect_by_rules = args.detect_by_rules
     self.client = nil
 end
 
@@ -66,6 +57,7 @@ end
 
 --- Same as init_client but ran in 'manage' signal handler
 function M.Floater:init_client_direct()
+    M.wid_storage:set(self.name, self.client.window)
 end
 
 --- Make client a special window.
@@ -74,9 +66,9 @@ function M.Floater:apply_client_settings()
     c.skip_taskbar = true
     awful.placement.no_overlap(c)
     awful.placement.no_offscreen(c)
-    -- We want to be able to resize such windows, so, comment the next line
-    -- self.client:buttons({})
-    c:keys({})
+    -- It turned out that we don't need to disable neither buttons nor keys.
+    -- c:buttons({})
+    -- c:keys({})
     c.size_hints_honor = false
     if self.rules == nil then
         -- Client didn't provide us with rules to detect the client so apply properties manually
@@ -119,6 +111,7 @@ function M.Floater:hideshow(show)
     if show == nil then
         show = not self.client:isvisible()
     end
+    log:debug("Toggling client to " .. (show and "visible" or "hidden"))
     if show then -- Show the client on the current tag
         self:show()
     else -- Hide it
@@ -138,6 +131,7 @@ function M.Floater:toggle(show)
     if show == nil then
         show = true
     end
+
     self:spawn(function () self:hideshow(show) end)
 end
 
@@ -176,12 +170,15 @@ end
 --- Spawns a client in the background if it is not yet spawned and if it is not being spawned.
 function M.Floater:spawn_in_bg()
     if not (self:has_client() or self:has_pending_client()) then
+        self.log:debug("Spawning in background")
         self:spawn(nil, function () self:hide() end)
     end
 end
 
 --- Called when client window was closed, try to reopen it in background if option is set.
 function M.Floater:on_unmanage()
+    self.log:debug("Unmanaged" .. (self.keep_in_background and ' (will relaunch)' or '') )
+    M.wid_storage:set(self.name, nil)
     self.client = nil
     if self.keep_in_background then
         utils.run_after(1, function ()
@@ -192,11 +189,13 @@ end
 
 --- Called when client loses focus
 function M.Floater:on_unfocus()
+    self.log:debug("Lost focus")
     self:hide()
 end
 
 --- Called when floater is added to floaters table
 function M.Floater:on_added()
+    self.log:debug("Floater was added to floaters table")
     if self.keep_in_background then
         utils.run_after(0, function ()
             self:spawn_in_bg()
@@ -218,6 +217,7 @@ end
 --- Starts floater's client. Must return pid.
 function M.Floater:start_app()
     result = awful.util.spawn(self.command)
+    self.log:debug("Started app, pid: %d", result)
     return result
 end
 
@@ -227,8 +227,10 @@ end
 --                          manage handler. This is required when current tag layout is floating.
 -- @param callback Callback to be called after client is spawned.
 function M.Floater:spawn(indirect_callback, callback)
+    self.log:debug("Trying to spawn")
     if self:has_client() then
         -- It is probably a bug if we got here.
+        self.log:error("Spawn was called while client was still alive.")
         return
     end
     self._spawn_callbacks = self._spawn_callbacks or {}
@@ -236,41 +238,68 @@ function M.Floater:spawn(indirect_callback, callback)
     table.insert(self._spawn_callbacks, callback)
     table.insert(self._indirect_spawn_callbacks, indirect_callback)
     if self._is_already_spawning then
+        self.log:info("Can't spawn, the client is already spawning.")
         return
     end
     self._is_already_spawning = true
 
     local pid = self:start_app()
-    utils.pid_to_client.set_pid_callback(pid, function (c)
-        self:set_client(c)
-        self._is_already_spawning = false
-        callbacks = self._spawn_callbacks
-        indirect_callbacks = self._indirect_spawn_callbacks
-        self._spawn_callbacks = nil
-        self._indirect_spawn_callbacks = nil
-        utils.run_after(0, function()
-            self:init_client()
-            for _, cb in ipairs(indirect_callbacks) do
-                cb()
-            end
-        end)
-        self:init_client_direct()
-        for _, cb in ipairs(callbacks) do
+
+    local function on_spawned_cb(c) self:_on_client_spawned(c) end
+
+    if self.detect_by_rules then
+        M._set_rule_callback(self, on_spawned_cb)
+    else
+        self.log:debug("Setting pid callback for pid %d", pid)
+        utils.pid_to_client.set_pid_callback(pid, on_spawned_cb)
+    end
+end
+
+function M.Floater:_on_client_spawned(c)
+    self.log:debug("A client was spawned!")
+    self:set_client(c)
+    self._is_already_spawning = false
+    local callbacks = self._spawn_callbacks
+    local indirect_callbacks = self._indirect_spawn_callbacks
+    self._spawn_callbacks = nil
+    self._indirect_spawn_callbacks = nil
+    utils.run_after(0, function()
+        self:init_client()
+        for _, cb in ipairs(indirect_callbacks) do
             cb()
         end
     end)
-
+    self:init_client_direct()
+    for _, cb in ipairs(callbacks) do
+        cb()
+    end
 end
 
 --- Called when a new client appears
 function M.on_manage(c, startup)
+    -- Maybe this client was requested by rule callback?
+    if not startup and M._matched_rule_callback(c, startup) then
+        return
+    end
     if not startup then -- we will try to recover lost floaters only after awesome.restart()
         return
     end
+
     -- Maybe this client was a floater and was "lost" after awesome restart? If so, restore the floater.
+
+    -- If we were brutally killed, we could have possibly not received
+    -- the unmanage signal and the window id could be unrelated.
+    if not rc.after_restart then
+        return
+    end
+
     for floater_name, floater in pairs(M.floaters) do
-        if not floater:has_client() and floater:client_matches(c) then
+        --TODO:Refactor
+        local wid = M.wid_storage:get(floater.name)
+        if not floater:has_client() and wid and wid == c.window then
+            log:debug("Recovered client for %s", floater.name)
             floater:set_client(c)
+            floater:init_client_direct()
             -- It's crucial to run init_client not in manage signal handler.
             -- Because for example c:geometry call is done there.
             -- If c:geometry call is done in manage signal handler directly
@@ -281,14 +310,32 @@ function M.on_manage(c, startup)
                 -- By default we will just hide all "recovered" floaters.
                 floater:hide()
             end)
-
             break
         end
     end
 end
 
+M._rule_callbacks = {}
+
+-- Refactor or something...
+function M._matched_rule_callback(c)
+    for i, elem in ipairs(M._rule_callbacks) do
+        if elem.floater:client_matches(c) then
+            table.remove(M._rule_callbacks, i)
+            elem.cb(c)
+            return true
+        end
+    end
+end
+
+function M._set_rule_callback(floater, cb)
+    log:debug("Setting rule callback for %s", floater.name)
+    table.insert(M._rule_callbacks, {floater=floater, cb=cb})
+end
+
 --- Toggles floater `floater_name`.
 function M.toggle(floater_name, show)
+    log:debug("A toggle was requested for %s", floater_name)
     local floater = M.floaters[floater_name]
     floater:toggle(show)
 end
@@ -303,8 +350,8 @@ function M.get_rules_properties()
 end
 
 --- Add Floater object and name it as `floater_name`
-function M.add(floater_name, floater)
-    M.floaters[floater_name] = floater
+function M.add(floater)
+    M.floaters[floater.name] = floater
     floater:on_added()
 end
 

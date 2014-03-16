@@ -8,7 +8,9 @@ local M = {
     { rule = { name = "Buddy List"},
       properties = { tag = rc.tags[1][7] } },
     { rule = { class = "Deadbeef" },
-      properties = { tag = rc.tags[1][4] } },
+      properties = { tag = rc.tags[1][5] } },
+    { rule = { class = "URxvt", name = "weechat" },
+      properties = { tag = rc.tags[1][4] } },      
 }
 
 return M

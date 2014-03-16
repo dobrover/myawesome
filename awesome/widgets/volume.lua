@@ -15,7 +15,7 @@ function M.update()
  
    local volume = string.match(status, "(%d?%d?%d)%%")
    volume = string.format("% 4d", volume)
-   log:debug{'Volume is "%s"', volume}
+   log:debug('Volume is "%s"', volume)
    status = string.match(status, "%[(o[^%]]*)%]")
 
    if string.find(status, "on", 1, true) then

@@ -28,6 +28,15 @@ rc = {
     terminal = "urxvt",
 } 
 
+-- Memstorage
+local memstorage = utils.memstorage
+local storage_backend = memstorage.XrdbBackend('Xstorage.AWM')
+rc.storage = memstorage.Memstorage(storage_backend)
+
+rc.after_restart = rc.storage:get('rc.after_restart')
+if rc.after_restart then
+    rc.storage:set('rc.after_restart', false)
+end
 -- TOODO!
 -- Logging - human-readable config!
 -- Move utils functions to submodules
@@ -108,7 +117,8 @@ rc.misc = require('addons.misc')
 rc.dropdown = require('addons.dropdown')
 do
     local urxvt_title = "dropdownURxvt"
-    rc.dropdown.add("urxvt", rc.dropdown.Floater({
+    rc.dropdown.add(rc.dropdown.Floater{
+        name = "urxvt",
         rule = {
           class = "URxvt",
           name = urxvt_title
@@ -119,7 +129,22 @@ do
         command = ("urxvt --title '%s' "):format(urxvt_title),
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
         keep_in_background = true,
-    }))
+    })
+    rc.dropdown.add(rc.dropdown.Floater{
+        name = "sublime_notes",
+        rule = {
+            class = "Gvim",
+            --name = ".+%(notes%) %- Sublime Text.*",
+            -- name = "notes",
+            -- Ok, soon we will not have to worry about regaining lost floaters, so this will be ok
+        },
+        properties = {
+            floating = true,
+        },
+        command = "gvim -n -y -S ~/notes/.gvimrc -p4 /home/y/notes/notes1 /home/y/notes/notes2 /home/y/notes/notes3 /home/y/notes/.gvimrc",
+        geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
+        detect_by_rules = true,
+    })
 end
 
 -- Extend with dropdown rules

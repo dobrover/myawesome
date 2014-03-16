@@ -17,6 +17,11 @@ local function switch_focus(switch_function)
     if client.focus then client.focus:raise() end
 end
 
+local function do_restart()
+    rc.storage:set('rc.after_restart', true)
+    awesome.restart()
+end
+
 -- {{{ Key bindings
 M.globalkeys = awful.util.table.join(
     -- Tag navigation
@@ -56,7 +61,7 @@ M.globalkeys = awful.util.table.join(
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(rc.terminal) end),
-    awful.key({ modkey, "Control" }, "r", awesome.restart),
+    awful.key({ modkey, "Control" }, "r", do_restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
     -- Resizing
@@ -73,6 +78,10 @@ M.globalkeys = awful.util.table.join(
 
     -- Dropdown terminal
     awful.key({ modkey,           }, "`",     function () rc.dropdown.toggle("urxvt") end),
+
+    -- Sublime notes
+    awful.key({ modkey,           }, "F1",     function () rc.dropdown.toggle("sublime_notes") end),
+
 
     -- Sound control
     awful.key({ }, "XF86AudioRaiseVolume", function ()
