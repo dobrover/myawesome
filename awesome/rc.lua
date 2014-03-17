@@ -37,14 +37,17 @@ rc.after_restart = rc.storage:get('rc.after_restart')
 if rc.after_restart then
     rc.storage:set('rc.after_restart', false)
 end
+
+function rc.get_storage(prefix)
+    return utils.memstorage.MemstorageAdapter(rc.storage, prefix or '')
+end
+
 -- TOODO!
 -- Logging - human-readable config!
 -- Move utils functions to submodules
 -- Write deferreds (basic verison very)
 -- Dropdown by rule or path
 -- Memstorage - cheap get, costly set, set -> also sets to cache
--- Dropdown use x window id instead of rules
--- One time app rules. - on manage signal. If new windowappears, applies rule and saves to memstorage
 -- Add timeout to deferreds
 
 -- Idea - turn dropdown into a normal window. How? Apply back client keys (basically backup everything when making it)

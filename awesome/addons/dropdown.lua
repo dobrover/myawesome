@@ -14,9 +14,7 @@ local oo = require('loop.simple')
 
 M.floaters = {}
 
-M.wid_storage = utils.memstorage.MemstorageAdapter(rc.storage, 'dropdown.clientid')
-
-M.Floater = common.baseclass.class()
+M.wid_storage = rc.get_storage('dropdown.clientid')
 
 -- TODO: Temporary
 local PrefixedLoggerAdapter = common.baseclass.class({}, logging.LoggerAdapter)
@@ -24,6 +22,8 @@ function PrefixedLoggerAdapter:process(args)
     oo.superclass(PrefixedLoggerAdapter).process(self, args)
      args[1] = self.extra.msg_prefix .. args[1]
 end
+
+M.Floater = common.baseclass.class()
 
 function M.Floater:__create(args)
     -- Name, used for logging and to interact with specific floater.
