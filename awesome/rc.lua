@@ -117,10 +117,11 @@ widgetlayout.do_layout()
 
 -- }}}
 
+local addons = require 'addons'
 -- Miscelaneous stuff
-rc.misc = require('addons.misc')
+rc.misc = addons.misc
 -- Dropdown module
-rc.dropdown = require('addons.dropdown')
+rc.dropdown = addons.dropdown
 rc.dropdown.setup()
 do
     rc.dropdown.add(rc.dropdown.Floater{
