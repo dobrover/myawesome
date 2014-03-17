@@ -30,9 +30,9 @@ function M.Floater:__create(args)
     self.name = args.name
     -- Prefix all log messages with floater name.
     self.log = PrefixedLoggerAdapter(log, {msg_prefix=self.name .. ': '})
-    -- Client rule-properties that will be added to awful.rules
-    -- Also this rule will be used to restore "lost" clients after awesome.restart()
+    -- This rule will be used for catching client if detect_by_rules = true
     self.rule = args.rule
+    -- Client properties
     self.properties = args.properties
     -- Command that will be launched by awful.util.spawn
     self.command = args.command
@@ -47,17 +47,24 @@ function M.Floater:__create(args)
     self.client = nil
 end
 
---- Make client belong to a floater, set properties, etc. Called only once.
+-- Initialization ran before default 'manage' signal handler.
+function M.Floater:init_client_early()
+    if self.properties.floating ~= nil then
+        awful.client.floating.set(self.client, self.properties.floating)
+    end
+end
+
+--- Initialization ran in 'manage' signal handler.
+function M.Floater:init_client_direct()
+    M.wid_storage:set(self.name, self.client.window)
+end
+
+--- Initialization ran in another event handler after 'manage' signal handler.
 function M.Floater:init_client()
     self.client:connect_signal("unmanage", function () self:on_unmanage() end)
     self.client:connect_signal("unfocus", function () self:on_unfocus() end)
     self:apply_client_settings()
     self:update_geometry()
-end
-
---- Same as init_client but ran in 'manage' signal handler
-function M.Floater:init_client_direct()
-    M.wid_storage:set(self.name, self.client.window)
 end
 
 --- Make client a special window.
@@ -203,17 +210,6 @@ function M.Floater:on_added()
     end
 end
 
---- Return floater's rule/properties so that it can be added to awful.rules.rules
-function M.Floater:get_rule_prop_pair()
-    if self.rule == nil or self.properties == nil then
-        return nil
-    end
-    return {
-        rule = self.rule,
-        properties = self.properties,
-    }
-end
-
 --- Starts floater's client. Must return pid.
 function M.Floater:start_app()
     result = awful.util.spawn(self.command)
@@ -226,17 +222,21 @@ end
 -- @param indirect_callback Callback to be spawned after client in spawned, but not in the
 --                          manage handler. This is required when current tag layout is floating.
 -- @param callback Callback to be called after client is spawned.
-function M.Floater:spawn(indirect_callback, callback)
+-- @param early_callback Callback to be called before default "manage" signal
+--                       handler (awful.rules.apply).
+function M.Floater:spawn(indirect_callback, callback, early_callback)
     self.log:debug("Trying to spawn")
     if self:has_client() then
-        -- It is probably a bug if we got here.
         self.log:error("Spawn was called while client was still alive.")
         return
     end
     self._spawn_callbacks = self._spawn_callbacks or {}
     self._indirect_spawn_callbacks = self._indirect_spawn_callbacks or {}
+    self._early_spawn_callbacks = self._early_spawn_callbacks or {}
     table.insert(self._spawn_callbacks, callback)
     table.insert(self._indirect_spawn_callbacks, indirect_callback)
+    table.insert(self._early_spawn_callbacks, early_callback)
+
     if self._is_already_spawning then
         self.log:info("Can't spawn, the client is already spawning.")
         return
@@ -246,23 +246,34 @@ function M.Floater:spawn(indirect_callback, callback)
     local pid = self:start_app()
 
     local function on_spawned_cb(c) self:_on_client_spawned(c) end
+    local function on_early_spawned_cb(c) self:_on_early_client_spawned(c) end
 
     if self.detect_by_rules then
         M._set_rule_callback(self, on_spawned_cb)
     else
         self.log:debug("Setting pid callback for pid %d", pid)
-        utils.pid_to_client.set_pid_callback(pid, on_spawned_cb)
+        utils.pid_to_client.set_pid_callback(pid, on_spawned_cb, on_early_spawned_cb)
+    end
+end
+
+function M.Floater:_on_early_client_spawned(c)
+    self.log:debug("Early stage - a client was spawned!")
+    self:set_client(c)
+    self:init_client_early()
+    local early_callbacks = self._early_spawn_callbacks
+    self._early_spawn_callbacks = nil
+    for _, cb in ipairs(early_callbacks) do
+        cb()
     end
 end
 
 function M.Floater:_on_client_spawned(c)
     self.log:debug("A client was spawned!")
-    self:set_client(c)
-    self._is_already_spawning = false
     local callbacks = self._spawn_callbacks
     local indirect_callbacks = self._indirect_spawn_callbacks
     self._spawn_callbacks = nil
     self._indirect_spawn_callbacks = nil
+    self._is_already_spawning = false
     utils.run_after(0, function()
         self:init_client()
         for _, cb in ipairs(indirect_callbacks) do
@@ -286,7 +297,7 @@ function M.on_manage(c, startup)
     end
 
     -- Maybe this client was a floater and was "lost" after awesome restart? If so, restore the floater.
-
+    --
     -- If we were brutally killed, we could have possibly not received
     -- the unmanage signal and the window id could be unrelated.
     if not rc.after_restart then
@@ -329,6 +340,8 @@ function M._matched_rule_callback(c)
 end
 
 function M._set_rule_callback(floater, cb)
+    -- TODO: Rewrite using early_manage + manage
+    error("Not implemented...")
     log:debug("Setting rule callback for %s", floater.name)
     table.insert(M._rule_callbacks, {floater=floater, cb=cb})
 end
@@ -340,22 +353,19 @@ function M.toggle(floater_name, show)
     floater:toggle(show)
 end
 
---- Returns table of rules of all floaters.
-function M.get_rules_properties()
-    result = {}
-    for floater_name, floater in pairs(M.floaters) do
-        table.insert(result, floater:get_rule_prop_pair())
-    end
-    return result
-end
-
 --- Add Floater object and name it as `floater_name`
 function M.add(floater)
     M.floaters[floater.name] = floater
     floater:on_added()
 end
 
-capi.client.connect_signal("manage", M.on_manage)
+-- Setup signals
+function M.setup()
+    if not M._setup then
+        M._setup = true
+        utils.pid_to_client.setup()
+        capi.client.connect_signal("manage", M.on_manage)
+    end
+end
 
 return M
-

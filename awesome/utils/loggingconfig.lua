@@ -31,7 +31,7 @@ function AwesomeHandler:emit(record)
     naughty.notify{text=self:format(record), title=title}
 end
 
-local awesomehdlr = AwesomeHandler(logging.DEBUG)
+local awesomehdlr = AwesomeHandler(logging.INFO)
 
 logging.getLogger(''):addHandler(awesomehdlr)
 

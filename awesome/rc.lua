@@ -9,6 +9,10 @@ wibox = require("wibox")
 local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
+
+-- Useful functions
+utils = require("utils")
+utils.early_manage.setup()
 -- Logging config
 require 'utils.loggingconfig'
 local log = require('logging').getLogger('rc')
@@ -18,9 +22,6 @@ local log = require('logging').getLogger('rc')
 require('constants')
 -- Themes define colours, icons, and wallpapers
 beautiful.init("/usr/share/awesome/themes/default/theme.lua")
-
--- Useful functions
-utils = require("utils")
 
 -- Global variables across rc.lua and subfiles
 rc = {
@@ -120,40 +121,26 @@ widgetlayout.do_layout()
 rc.misc = require('addons.misc')
 -- Dropdown module
 rc.dropdown = require('addons.dropdown')
+rc.dropdown.setup()
 do
-    local urxvt_title = "dropdownURxvt"
     rc.dropdown.add(rc.dropdown.Floater{
         name = "urxvt",
-        rule = {
-          class = "URxvt",
-          name = urxvt_title
-        },
         properties = {
             floating = true,
         },
-        command = ("urxvt --title '%s' "):format(urxvt_title),
+        command = "urxvt",
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
         keep_in_background = true,
     })
     rc.dropdown.add(rc.dropdown.Floater{
-        name = "sublime_notes",
-        rule = {
-            class = "Gvim",
-            --name = ".+%(notes%) %- Sublime Text.*",
-            -- name = "notes",
-            -- Ok, soon we will not have to worry about regaining lost floaters, so this will be ok
-        },
+        name = "gvim_notes",
         properties = {
             floating = true,
         },
-        command = "gvim -n -y -S ~/notes/.gvimrc -p4 /home/y/notes/notes1 /home/y/notes/notes2 /home/y/notes/notes3 /home/y/notes/.gvimrc",
+        command = "gvim --nofork -n -y -S ~/notes/.gvimrc -p4 /home/y/notes/notes1 /home/y/notes/notes2 /home/y/notes/notes3 /home/y/notes/.gvimrc",
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
-        detect_by_rules = true,
     })
 end
-
--- Extend with dropdown rules
-awful.rules.rules = awful.util.table.join(awful.rules.rules, rc.dropdown.get_rules_properties())
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to

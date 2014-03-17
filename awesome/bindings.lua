@@ -79,8 +79,8 @@ M.globalkeys = awful.util.table.join(
     -- Dropdown terminal
     awful.key({ modkey,           }, "`",     function () rc.dropdown.toggle("urxvt") end),
 
-    -- Sublime notes
-    awful.key({ modkey,           }, "F1",     function () rc.dropdown.toggle("sublime_notes") end),
+    -- Gvim notes
+    awful.key({ modkey,           }, "F1",     function () rc.dropdown.toggle("gvim_notes") end),
 
 
     -- Sound control
