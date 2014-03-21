@@ -95,8 +95,8 @@ M.globalkeys = awful.util.table.join(
     end),
 
     -- Brightness
-    awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("xbacklight -inc 10") end),
-    awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 10") end),
+    awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("xbacklight -inc 10", false) end),
+    awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 10", false) end),
 
     awful.key({ }, "Print", function () awful.util.spawn("scrot -e 'mv $f ~/.screenshots/ 2>/dev/null'", false) end),
     
