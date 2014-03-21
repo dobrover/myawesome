@@ -1,3 +1,5 @@
+-- This module will be no longer needed after next release.
+-- TODO: Steal from github rules.execute
 local capi = {
     client = client,
 }

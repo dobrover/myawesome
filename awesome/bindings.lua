@@ -100,6 +100,12 @@ M.globalkeys = awful.util.table.join(
 
     awful.key({ }, "Print", function () awful.util.spawn("scrot -e 'mv $f ~/.screenshots/ 2>/dev/null'", false) end),
     
+    -- Deadbeef audio control
+    awful.key({ }, "XF86AudioPlay", function () awful.util.spawn("deadbeef --toggle-pause", false) end),
+    awful.key({ }, "XF86AudioPrev", function () awful.util.spawn("deadbeef --prev", false) end),
+    awful.key({ }, "XF86AudioNext", function () awful.util.spawn("deadbeef --next", false) end),
+    awful.key({ }, "XF86AudioStop", function () awful.util.spawn("deadbeef --stop", false) end),
+
     -- Prompt
     awful.key({ modkey }, "r",     function () mypromptbox[mouse.screen]:run() end),
 
