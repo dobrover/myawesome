@@ -44,15 +44,21 @@ function rc.get_storage(prefix)
 end
 
 -- TOODO!
--- Logging - human-readable config!
+-- Logging - human-readable config! -Probably later.
 -- Move utils functions to submodules
 -- Write deferreds (basic verison very)
 -- Dropdown by rule or path
--- Memstorage - cheap get, costly set, set -> also sets to cache
 -- Add timeout to deferreds
 
--- Idea - turn dropdown into a normal window. How? Apply back client keys (basically backup everything when making it)
--- Also add a button to make a normal window into dropdown. Cool!
+-- Idea - turn dropdown into a normal window.
+-- This just removes client from floater (like unmanage, so it thinks that there is no more client
+-- and recreates it in a moment)
+-- Also add a button to make a normal window into dropdown.
+-- Hotkeys:
+-- Win+Ctrl+F_{2-12} - make current client dropdown and toggle it on the corresponding Fkey
+-- Dropdown can't be reassigned to another Win+Ctrl+F_{2-12}
+-- Use Win+Q to turn dropdown into a normal window. (doesn't do anything if cu
+-- current client is not a dropdown)
 
 
 rc.utils = utils
@@ -140,6 +146,19 @@ do
         },
         command = "gvim --nofork -n -y -S ~/notes/.gvimrc -p4 /home/y/notes/notes1 /home/y/notes/notes2 /home/y/notes/notes3 /home/y/notes/.gvimrc",
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
+        keep_in_background = true,
+    })
+    rc.dropdown.add(rc.dropdown.Floater{
+        -- Example of using dropdown with programs that fork and therefore
+        -- can't be tracked by PID.
+        name = "gvim_notes_rules",
+        detect_by_rules = true,
+        command = "gvim",
+        rule = {
+            class = "Gvim",
+        },
+        properties = { floating = true },
+        geometry = {x = 0, y = 20, width = -1.0, height=-0.99}
     })
 end
 

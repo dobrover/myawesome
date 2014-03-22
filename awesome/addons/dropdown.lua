@@ -238,7 +238,7 @@ function M.Floater:spawn(indirect_callback, callback, early_callback)
     table.insert(self._early_spawn_callbacks, early_callback)
 
     if self._is_already_spawning then
-        self.log:info("Can't spawn, the client is already spawning.")
+        self.log:warn("Can't spawn, the client is already spawning.")
         return
     end
     self._is_already_spawning = true
@@ -248,8 +248,9 @@ function M.Floater:spawn(indirect_callback, callback, early_callback)
     local function on_spawned_cb(c) self:_on_client_spawned(c) end
     local function on_early_spawned_cb(c) self:_on_early_client_spawned(c) end
 
+    -- TODO: This will perfectly be replaced by deferreds.
     if self.detect_by_rules then
-        M._set_rule_callback(self, on_spawned_cb)
+        M._set_rule_callback(self, on_spawned_cb, on_early_spawned_cb)
     else
         self.log:debug("Setting pid callback for pid %d", pid)
         utils.pid_to_client.set_pid_callback(pid, on_spawned_cb, on_early_spawned_cb)
@@ -286,12 +287,43 @@ function M.Floater:_on_client_spawned(c)
     end
 end
 
+-- Returns a floater that may adopt this client since it has no client
+-- at the current moment and the client matches its X window ID
+-- Or if this client is already owned by some floater, return that floater.
+function M.get_matching_floater(c)
+    for floater_name, floater in pairs(M.floaters) do
+        if floater.client == c then
+            return floater
+        end
+        local wid = M.wid_storage:get(floater.name)
+        if not floater:has_client() and wid and wid == c.window then
+            return floater
+        end
+    end
+end
+
+-- Called when a new client appears but before default awful.rules handler.
+function M.on_early_manage(c, startup)
+    -- Maybe this client was requested by rule callback?
+    if not startup and M._matched_rule_callback(c, startup, true) then
+        return
+    end
+    local floater = M.get_matching_floater(c)
+
+    if floater then
+        floater:set_client(c)
+        floater:init_client_early()
+        return
+    end
+
+end
+
 --- Called when a new client appears
 function M.on_manage(c, startup)
-    -- Maybe this client was requested by rule callback?
     if not startup and M._matched_rule_callback(c, startup) then
         return
     end
+
     if not startup then -- we will try to recover lost floaters only after awesome.restart()
         return
     end
@@ -303,47 +335,46 @@ function M.on_manage(c, startup)
     if not rc.after_restart then
         return
     end
+    local floater = M.get_matching_floater(c)
 
-    for floater_name, floater in pairs(M.floaters) do
-        --TODO:Refactor
-        local wid = M.wid_storage:get(floater.name)
-        if not floater:has_client() and wid and wid == c.window then
-            log:debug("Recovered client for %s", floater.name)
-            floater:set_client(c)
-            floater:init_client_direct()
-            -- It's crucial to run init_client not in manage signal handler.
-            -- Because for example c:geometry call is done there.
-            -- If c:geometry call is done in manage signal handler directly
-            -- and the client has just spawned and the current layout is floating
-            -- then the geometry call won't set client position/size.
-            utils.run_after(0, function()
-                floater:init_client()
-                -- By default we will just hide all "recovered" floaters.
-                floater:hide()
-            end)
-            break
-        end
+    if floater then
+        floater:init_client_direct()
+        -- It's crucial to run init_client not in manage signal handler.
+        -- Because for example c:geometry call is done there.
+        -- If c:geometry call is done in manage signal handler directly
+        -- and the client has just spawned and the current layout is floating
+        -- then the geometry call won't set client position/size.
+        utils.run_after(0, function()
+            floater:init_client()
+            -- By default we will just hide all "recovered" floaters.
+            floater:hide()
+        end)
+        return
     end
 end
 
 M._rule_callbacks = {}
 
 -- Refactor or something...
-function M._matched_rule_callback(c)
+function M._matched_rule_callback(c, startup, early)
+    log:debug("Trying to match %s", c.name)
     for i, elem in ipairs(M._rule_callbacks) do
         if elem.floater:client_matches(c) then
-            table.remove(M._rule_callbacks, i)
-            elem.cb(c)
+            log:debug("Matched rule callback: %s early=%s", c.name, early)
+            if early then
+                elem.early_cb(c)
+            else
+                table.remove(M._rule_callbacks, i)
+                elem.cb(c)
+            end
             return true
         end
     end
 end
 
-function M._set_rule_callback(floater, cb)
-    -- TODO: Rewrite using early_manage + manage
-    error("Not implemented...")
+function M._set_rule_callback(floater, cb, early_cb)
     log:debug("Setting rule callback for %s", floater.name)
-    table.insert(M._rule_callbacks, {floater=floater, cb=cb})
+    table.insert(M._rule_callbacks, {floater=floater, cb=cb, early_cb=early_cb})
 end
 
 --- Toggles floater `floater_name`.
@@ -363,8 +394,10 @@ end
 function M.setup()
     if not M._setup then
         M._setup = true
+        utils.early_manage.setup()
         utils.pid_to_client.setup()
         capi.client.connect_signal("manage", M.on_manage)
+        capi.client.connect_signal("early_manage", M.on_early_manage)
     end
 end
 

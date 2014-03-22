@@ -81,7 +81,8 @@ M.globalkeys = awful.util.table.join(
 
     -- Gvim notes
     awful.key({ modkey,           }, "F1",     function () rc.dropdown.toggle("gvim_notes") end),
-
+    -- Temporary, just for demonstration of gvim that forks and can't be tracked by pid.
+    awful.key({ modkey,           }, "F12",     function () rc.dropdown.toggle("gvim_notes_rules") end),
 
     -- Sound control
     awful.key({ }, "XF86AudioRaiseVolume", function ()
