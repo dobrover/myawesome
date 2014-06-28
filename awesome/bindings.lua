@@ -68,11 +68,31 @@ M.globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
     awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
 
+    -- Increase number of master windows.
+    awful.key({ modkey, "Shift" }, "h", function()
+        awful.tag.incnmaster(1)
+    end),
+
+    -- Decrease number of master windows.
+    awful.key({ modkey, "Shift" }, "l", function()
+        awful.tag.incnmaster(-1)
+    end),
+
+    -- Increase number of column windows.
+    awful.key({ modkey, "Control"   }, "h", function()
+        awful.tag.incncol(1)
+    end),
+
+    -- Decrease number of column windows.
+    awful.key({ modkey, "Control"   }, "l", function()
+        awful.tag.incncol(-1)
+    end),
+
     -- Increase/decrease amount of master windows
     awful.key({ modkey, "Shift"   }, "h",     function () awful.tag.incnmaster( 1)      end),
     awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster(-1)      end),
 
-    -- Next/previous layout 
+    -- Next/previous layout
     awful.key({ modkey,           }, "space", function () awful.layout.inc(rc.layouts,  1) end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(rc.layouts, -1) end),
 
@@ -86,10 +106,10 @@ M.globalkeys = awful.util.table.join(
 
     -- Sound control
     awful.key({ }, "XF86AudioRaiseVolume", function ()
-        awful.util.spawn("amixer set Master 5%+", false) rc.widgets.volume.update() 
+        awful.util.spawn("amixer set Master 5%+", false) rc.widgets.volume.update()
     end),
     awful.key({ }, "XF86AudioLowerVolume", function ()
-        awful.util.spawn("amixer set Master 5%-", false) rc.widgets.volume.update() 
+        awful.util.spawn("amixer set Master 5%-", false) rc.widgets.volume.update()
     end),
     awful.key({ }, "XF86AudioMute", function ()
         awful.util.spawn("amixer set Master toggle", false) rc.widgets.volume.update()
@@ -100,7 +120,7 @@ M.globalkeys = awful.util.table.join(
     awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 10", false) end),
 
     awful.key({ }, "Print", function () awful.util.spawn("scrot -e 'mv $f ~/.screenshots/ 2>/dev/null'", false) end),
-    
+
     -- Deadbeef audio control
     awful.key({ }, "XF86AudioPlay", function () awful.util.spawn("deadbeef --toggle-pause", false) end),
     awful.key({ }, "XF86AudioPrev", function () awful.util.spawn("deadbeef --prev", false) end),
@@ -144,7 +164,7 @@ M.clientkeys = awful.util.table.join(
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it works on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
-for i = 1, 9 do
+for i = 1, #rc.tags.names do
     M.globalkeys = awful.util.table.join(M.globalkeys,
         -- View tag #i
         awful.key({ modkey }, "#" .. i + 9, function ()

@@ -7,8 +7,8 @@ local capi = {
     screen = screen
 }
 local utils = require('utils')
-local common = require 'common'
-local logging = require 'logging'
+local common = require('common')
+local logging = require('logging')
 local log = logging.getLogger(...)
 local oo = require('loop.simple')
 
@@ -355,7 +355,7 @@ end
 
 M._rule_callbacks = {}
 
--- Refactor or something...
+-- TODO: Also will be perfectly replaced by deferreds....
 function M._matched_rule_callback(c, startup, early)
     log:debug("Trying to match %s", c.name)
     for i, elem in ipairs(M._rule_callbacks) do

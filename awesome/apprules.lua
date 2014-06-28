@@ -22,11 +22,11 @@ apprules.onetimerules = {
     pidgin_converation = { rule = { class = "Pidgin", role = "conversation" },
       properties = { tag = rc.tags[1][2] } },
     pidgin_buddy_list = { rule = { class = "Pidgin", role = "buddy_list"},
-      properties = { tag = rc.tags[1][7] } },
+      properties = { tag = rc.tags[1][14] } },
     deadbeef = { rule = { class = "Deadbeef" },
       properties = { tag = rc.tags[1][5] } },
-    weechat = { rule = { class = "URxvt", name = "weechat" },
-      properties = { tag = rc.tags[1][4] } },      
+    weechat = { rule = { class = "Termite", name = "weechat" },
+      properties = { tag = rc.tags[1][13] } },
 }
 
 
@@ -47,7 +47,7 @@ function apprules.on_manage(c, startup)
             apprules.onetimerules[rulename] = nil
             break
         end
-    end        
+    end
 end
 
 capi.client.connect_signal("manage", apprules.on_manage)

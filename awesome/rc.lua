@@ -26,8 +26,8 @@ beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 -- Global variables across rc.lua and subfiles
 rc = {
     -- Default terminal
-    terminal = "urxvt",
-} 
+    terminal = "termite",
+}
 
 -- Memstorage
 local memstorage = utils.memstorage
@@ -77,10 +77,10 @@ rc.layouts =
 
 -- {{{ Tags
 -- Define a tag table which will hold all screen tags.
-rc.tags = {                                                                                                                                                                                      
-    names  = { "1w", "2msg ", "3trm", "4off", "5@", "6vmr", "7"},
+rc.tags = {
+    names  = { "1w", "2msg ", "3trm", "4off", "5@", "6vmr", "7", "8", "9", "0", "-", "+", "←", "trash"},
     layout = { rc.layouts[1], rc.layouts[3], rc.layouts[6], rc.layouts[2], rc.layouts[2],
-           rc.layouts[3], rc.layouts[3] }
+           rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3], rc.layouts[3]}
 }
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
@@ -97,15 +97,15 @@ local apprules = require('apprules')
 -- General rules
 awful.rules.rules = awful.util.table.join(awful.rules.rules, {
         -- Rule for all clients
-        { 
+        {
             rule = { },
             properties = {
                 border_width = beautiful.border_width,
                 border_color = beautiful.border_normal,
                 focus = awful.client.focus.filter,
                 keys = bindings.clientkeys,
-                buttons = bindings.clientbuttons 
-            } 
+                buttons = bindings.clientbuttons
+            }
         },
     },
     apprules.permanent_rules
@@ -135,7 +135,7 @@ do
         properties = {
             floating = true,
         },
-        command = "urxvt",
+        command = "termite",
         geometry = {x = -0.10, y = 20, width = -0.8, height = -0.5},
         keep_in_background = true,
     })
